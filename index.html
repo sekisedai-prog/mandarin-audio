@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mandarin Audio Player</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #e2e8f0;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --primary: #3b82f6;
+        --primary-hover: #60a5fa;
+        --border: #334155;
+        --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2.5rem 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .chinese-word {
+      font-size: 4rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+    .btn-play {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 9999px;
+      padding: 1rem 2rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .btn-play:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-play:active { transform: translateY(1px); }
+    audio { width: 100%; margin-top: 0.5rem; border-radius: 0.5rem; }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      text-decoration: none;
+      flex: 1;
+    }
+    .nav-btn:hover { background: rgba(0, 0, 0, 0.05); color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge" id="cardBadge">Card #1</div>
+    <div class="chinese-word" id="chineseWord">...</div>
+
+    <button class="btn-play" id="playBtn" onclick="playAudio()">
+      🔊 Play Audio
+    </button>
+
+    <audio id="audioPlayer" controls preload="auto"></audio>
+
+    <div class="nav-buttons">
+      <a href="#" class="nav-btn" id="prevBtn">← Previous</a>
+      <a href="#" class="nav-btn" id="nextBtn">Next →</a>
+    </div>
+  </div>
+
+  <script>
+    // Embedded card database loaded automatically
+    const CARDS = [
+      { id: 1, word: "谢谢", file: "001_谢谢.mp3" },
+      { id: 2, word: "再见", file: "002_再见.mp3" },
+      { id: 3, word: "不客气", file: "003_不客气.mp3" },
+      { id: 4, word: "对不起", file: "004_对不起.mp3" },
+      { id: 5, word: "没关系", file: "005_没关系.mp3" },
+      { id: 6, word: "请", file: "006_请.mp3" },
+      { id: 7, word: "喂", file: "007_喂.mp3" },
+      { id: 8, word: "认识", file: "008_认识.mp3" },
+      { id: 9, word: "叫", file: "009_叫.mp3" },
+      { id: 10, word: "说话", file: "010_说话.mp3" },
+      { id: 11, word: "爸爸", file: "011_爸爸.mp3" },
+      { id: 12, word: "妈妈", file: "012_妈妈.mp3" },
+      { id: 13, word: "儿子", file: "013_儿子.mp3" },
+      { id: 14, word: "女儿", file: "014_女儿.mp3" },
+      { id: 15, word: "先生", file: "015_先生.mp3" },
+      { id: 16, word: "小姐", file: "016_小姐.mp3" },
+      { id: 17, word: "老师", file: "017_老师.mp3" },
+      { id: 18, word: "学生", file: "018_学生.mp3" },
+      { id: 19, word: "同学", file: "019_同学.mp3" },
+      { id: 20, word: "朋友", file: "020_朋友.mp3" },
+      { id: 21, word: "一", file: "021_一.mp3" },
+      { id: 22, word: "二", file: "022_二.mp3" },
+      { id: 23, word: "三", file: "023_三.mp3" },
+      { id: 24, word: "四", file: "024_四.mp3" },
+      { id: 25, word: "五", file: "025_五.mp3" },
+      { id: 26, word: "六", file: "026_六.mp3" },
+      { id: 27, word: "七", file: "027_七.mp3" },
+      { id: 28, word: "八", file: "028_八.mp3" },
+      { id: 29, word: "九", file: "029_九.mp3" },
+      { id: 30, word: "十", file: "030_十.mp3" },
+      { id: 31, word: "今天", file: "031_今天.mp3" },
+      { id: 32, word: "明天", file: "032_明天.mp3" },
+      { id: 33, word: "昨天", file: "033_昨天.mp3" },
+      { id: 34, word: "年", file: "034_年.mp3" },
+      { id: 35, word: "月", file: "035_月.mp3" },
+      { id: 36, word: "星期", file: "036_星期.mp3" },
+      { id: 37, word: "上午", file: "037_上午.mp3" },
+      { id: 38, word: "下午", file: "038_下午.mp3" },
+      { id: 39, word: "中午", file: "039_中午.mp3" },
+      { id: 40, word: "分钟", file: "040_分钟.mp3" },
+      { id: 41, word: "菜", file: "041_菜.mp3" },
+      { id: 42, word: "茶", file: "042_茶.mp3" },
+      { id: 43, word: "吃", file: "043_吃.mp3" },
+      { id: 44, word: "喝", file: "044_喝.mp3" },
+      { id: 45, word: "米饭", file: "045_米饭.mp3" },
+      { id: 46, word: "苹果", file: "046_苹果.mp3" },
+      { id: 47, word: "水果", file: "047_水果.mp3" },
+      { id: 48, word: "水", file: "048_水.mp3" },
+      { id: 49, word: "杯子", file: "049_杯子.mp3" },
+      { id: 50, word: "饭馆", file: "050_饭馆.mp3" },
+      { id: 51, word: "家", file: "051_家.mp3" },
+      { id: 52, word: "衣服", file: "052_衣服.mp3" },
+      { id: 53, word: "桌子", file: "053_桌子.mp3" },
+      { id: 54, word: "椅子", file: "054_椅子.mp3" },
+      { id: 55, word: "书", file: "055_书.mp3" },
+      { id: 56, word: "字", file: "056_字.mp3" },
+      { id: 57, word: "电脑", file: "057_电脑.mp3" },
+      { id: 58, word: "电视", file: "058_电视.mp3" },
+      { id: 59, word: "东西", file: "059_东西.mp3" },
+      { id: 60, word: "本", file: "060_本.mp3" },
+      { id: 61, word: "北京", file: "061_北京.mp3" },
+      { id: 62, word: "中国", file: "062_中国.mp3" },
+      { id: 63, word: "学校", file: "063_学校.mp3" },
+      { id: 64, word: "医院", file: "064_医院.mp3" },
+      { id: 65, word: "商店", file: "065_商店.mp3" },
+      { id: 66, word: "出租车", file: "066_出租车.mp3" },
+      { id: 67, word: "飞机", file: "067_飞机.mp3" },
+      { id: 68, word: "火车站", file: "068_火车站.mp3" },
+      { id: 69, word: "前面", file: "069_前面.mp3" },
+      { id: 70, word: "后面", file: "070_后面.mp3" },
+      { id: 71, word: "爱", file: "071_爱.mp3" },
+      { id: 72, word: "读", file: "072_读.mp3" },
+      { id: 73, word: "打电话", file: "073_打电话.mp3" },
+      { id: 74, word: "工作", file: "074_工作.mp3" },
+      { id: 75, word: "看", file: "075_看.mp3" },
+      { id: 76, word: "听", file: "076_听.mp3" },
+      { id: 77, word: "写", file: "077_写.mp3" },
+      { id: 78, word: "学习", file: "078_学习.mp3" },
+      { id: 79, word: "睡觉", file: "079_睡觉.mp3" },
+      { id: 80, word: "做", file: "080_做.mp3" },
+      { id: 81, word: "大", file: "081_大.mp3" },
+      { id: 82, word: "小", file: "082_小.mp3" },
+      { id: 83, word: "多", file: "083_多.mp3" },
+      { id: 84, word: "少", file: "084_少.mp3" },
+      { id: 85, word: "漂亮", file: "085_漂亮.mp3" },
+      { id: 86, word: "高兴", file: "086_高兴.mp3" },
+      { id: 87, word: "冷", file: "087_冷.mp3" },
+      { id: 88, word: "热", file: "088_热.mp3" },
+      { id: 89, word: "好", file: "089_好.mp3" },
+      { id: 90, word: "忙", file: "090_忙.mp3" },
+      { id: 91, word: "你", file: "091_你.mp3" },
+      { id: 92, word: "我", file: "092_我.mp3" },
+      { id: 93, word: "他", file: "093_他.mp3" },
+      { id: 94, word: "她", file: "094_她.mp3" },
+      { id: 95, word: "我们", file: "095_我们.mp3" },
+      { id: 96, word: "什么", file: "096_什么.mp3" },
+      { id: 97, word: "谁", file: "097_谁.mp3" },
+      { id: 98, word: "哪", file: "098_哪.mp3" },
+      { id: 99, word: "怎么", file: "099_怎么.mp3" },
+      { id: 100, word: "多少", file: "100_多少.mp3" }
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const cardId = parseInt(params.get('id') || params.get('card') || '1', 10);
+    const currentCard = CARDS.find(c => c.id === cardId) || CARDS[0];
+
+    document.getElementById('cardBadge').textContent = `Card #${currentCard.id}`;
+    document.getElementById('chineseWord').textContent = currentCard.word;
+    document.title = `Mandarin Card #${currentCard.id} - ${currentCard.word}`;
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const audioUrl = `audio/${encodeURIComponent(currentCard.file)}`;
+    audioPlayer.src = audioUrl;
+
+    // Navigation setup
+    const prevId = currentCard.id > 1 ? currentCard.id - 1 : CARDS.length;
+    const nextId = currentCard.id < CARDS.length ? currentCard.id + 1 : 1;
+    document.getElementById('prevBtn').href = `?id=${prevId}`;
+    document.getElementById('nextBtn').href = `?id=${nextId}`;
+
+    function playAudio() {
+      audioPlayer.play().catch(err => {
+        console.log("Autoplay blocked or playback error:", err);
+      });
+    }
+
+    // Auto-play on load if possible
+    window.addEventListener('load', () => {
+      audioPlayer.play().catch(() => {
+        // Autoplay requires user gesture on mobile browsers
+      });
+    });
+  </script>
+</body>
+</html>
